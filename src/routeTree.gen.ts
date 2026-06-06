@@ -13,6 +13,7 @@ import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
 import { Route as AppLayoutRouteImport } from './routes/_app/layout'
 import { Route as AuthSignInIndexRouteImport } from './routes/_auth/sign-in/index'
 import { Route as AuthResetPasswordIndexRouteImport } from './routes/_auth/reset-password/index'
+import { Route as AuthChangePasswordIndexRouteImport } from './routes/_auth/change-password/index'
 import { Route as AppDashboardIndexRouteImport } from './routes/_app/dashboard/index'
 
 const AuthLayoutRoute = AuthLayoutRouteImport.update({
@@ -33,6 +34,11 @@ const AuthResetPasswordIndexRoute = AuthResetPasswordIndexRouteImport.update({
   path: '/reset-password/',
   getParentRoute: () => AuthLayoutRoute,
 } as any)
+const AuthChangePasswordIndexRoute = AuthChangePasswordIndexRouteImport.update({
+  id: '/change-password/',
+  path: '/change-password/',
+  getParentRoute: () => AuthLayoutRoute,
+} as any)
 const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
@@ -42,12 +48,14 @@ const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthLayoutRouteWithChildren
   '/dashboard/': typeof AppDashboardIndexRoute
+  '/change-password/': typeof AuthChangePasswordIndexRoute
   '/reset-password/': typeof AuthResetPasswordIndexRoute
   '/sign-in/': typeof AuthSignInIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthLayoutRouteWithChildren
   '/dashboard': typeof AppDashboardIndexRoute
+  '/change-password': typeof AuthChangePasswordIndexRoute
   '/reset-password': typeof AuthResetPasswordIndexRoute
   '/sign-in': typeof AuthSignInIndexRoute
 }
@@ -56,19 +64,26 @@ export interface FileRoutesById {
   '/_app': typeof AppLayoutRouteWithChildren
   '/_auth': typeof AuthLayoutRouteWithChildren
   '/_app/dashboard/': typeof AppDashboardIndexRoute
+  '/_auth/change-password/': typeof AuthChangePasswordIndexRoute
   '/_auth/reset-password/': typeof AuthResetPasswordIndexRoute
   '/_auth/sign-in/': typeof AuthSignInIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard/' | '/reset-password/' | '/sign-in/'
+  fullPaths:
+    | '/'
+    | '/dashboard/'
+    | '/change-password/'
+    | '/reset-password/'
+    | '/sign-in/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/reset-password' | '/sign-in'
+  to: '/' | '/dashboard' | '/change-password' | '/reset-password' | '/sign-in'
   id:
     | '__root__'
     | '/_app'
     | '/_auth'
     | '/_app/dashboard/'
+    | '/_auth/change-password/'
     | '/_auth/reset-password/'
     | '/_auth/sign-in/'
   fileRoutesById: FileRoutesById
@@ -108,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthResetPasswordIndexRouteImport
       parentRoute: typeof AuthLayoutRoute
     }
+    '/_auth/change-password/': {
+      id: '/_auth/change-password/'
+      path: '/change-password'
+      fullPath: '/change-password/'
+      preLoaderRoute: typeof AuthChangePasswordIndexRouteImport
+      parentRoute: typeof AuthLayoutRoute
+    }
     '/_app/dashboard/': {
       id: '/_app/dashboard/'
       path: '/dashboard'
@@ -131,11 +153,13 @@ const AppLayoutRouteWithChildren = AppLayoutRoute._addFileChildren(
 )
 
 interface AuthLayoutRouteChildren {
+  AuthChangePasswordIndexRoute: typeof AuthChangePasswordIndexRoute
   AuthResetPasswordIndexRoute: typeof AuthResetPasswordIndexRoute
   AuthSignInIndexRoute: typeof AuthSignInIndexRoute
 }
 
 const AuthLayoutRouteChildren: AuthLayoutRouteChildren = {
+  AuthChangePasswordIndexRoute: AuthChangePasswordIndexRoute,
   AuthResetPasswordIndexRoute: AuthResetPasswordIndexRoute,
   AuthSignInIndexRoute: AuthSignInIndexRoute,
 }
