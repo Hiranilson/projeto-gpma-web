@@ -9,68 +9,144 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthLayoutRouteImport } from './routes/_auth/layout'
+import { Route as AppLayoutRouteImport } from './routes/_app/layout'
+import { Route as AuthSignInIndexRouteImport } from './routes/_auth/sign-in/index'
+import { Route as AuthResetPasswordIndexRouteImport } from './routes/_auth/reset-password/index'
+import { Route as AppDashboardIndexRouteImport } from './routes/_app/dashboard/index'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const AuthLayoutRoute = AuthLayoutRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AppLayoutRoute = AppLayoutRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignInIndexRoute = AuthSignInIndexRouteImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
+  getParentRoute: () => AuthLayoutRoute,
+} as any)
+const AuthResetPasswordIndexRoute = AuthResetPasswordIndexRouteImport.update({
+  id: '/reset-password/',
+  path: '/reset-password/',
+  getParentRoute: () => AuthLayoutRoute,
+} as any)
+const AppDashboardIndexRoute = AppDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => AppLayoutRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof AuthLayoutRouteWithChildren
+  '/dashboard/': typeof AppDashboardIndexRoute
+  '/reset-password/': typeof AuthResetPasswordIndexRoute
+  '/sign-in/': typeof AuthSignInIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/': typeof AuthLayoutRouteWithChildren
+  '/dashboard': typeof AppDashboardIndexRoute
+  '/reset-password': typeof AuthResetPasswordIndexRoute
+  '/sign-in': typeof AuthSignInIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/_app': typeof AppLayoutRouteWithChildren
+  '/_auth': typeof AuthLayoutRouteWithChildren
+  '/_app/dashboard/': typeof AppDashboardIndexRoute
+  '/_auth/reset-password/': typeof AuthResetPasswordIndexRoute
+  '/_auth/sign-in/': typeof AuthSignInIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/dashboard/' | '/reset-password/' | '/sign-in/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '/dashboard' | '/reset-password' | '/sign-in'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/_auth'
+    | '/_app/dashboard/'
+    | '/_auth/reset-password/'
+    | '/_auth/sign-in/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  AppLayoutRoute: typeof AppLayoutRouteWithChildren
+  AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AppLayoutRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/sign-in/': {
+      id: '/_auth/sign-in/'
+      path: '/sign-in'
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof AuthSignInIndexRouteImport
+      parentRoute: typeof AuthLayoutRoute
+    }
+    '/_auth/reset-password/': {
+      id: '/_auth/reset-password/'
+      path: '/reset-password'
+      fullPath: '/reset-password/'
+      preLoaderRoute: typeof AuthResetPasswordIndexRouteImport
+      parentRoute: typeof AuthLayoutRoute
+    }
+    '/_app/dashboard/': {
+      id: '/_app/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AppDashboardIndexRouteImport
+      parentRoute: typeof AppLayoutRoute
     }
   }
 }
 
+interface AppLayoutRouteChildren {
+  AppDashboardIndexRoute: typeof AppDashboardIndexRoute
+}
+
+const AppLayoutRouteChildren: AppLayoutRouteChildren = {
+  AppDashboardIndexRoute: AppDashboardIndexRoute,
+}
+
+const AppLayoutRouteWithChildren = AppLayoutRoute._addFileChildren(
+  AppLayoutRouteChildren,
+)
+
+interface AuthLayoutRouteChildren {
+  AuthResetPasswordIndexRoute: typeof AuthResetPasswordIndexRoute
+  AuthSignInIndexRoute: typeof AuthSignInIndexRoute
+}
+
+const AuthLayoutRouteChildren: AuthLayoutRouteChildren = {
+  AuthResetPasswordIndexRoute: AuthResetPasswordIndexRoute,
+  AuthSignInIndexRoute: AuthSignInIndexRoute,
+}
+
+const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
+  AuthLayoutRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  AppLayoutRoute: AppLayoutRouteWithChildren,
+  AuthLayoutRoute: AuthLayoutRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
