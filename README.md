@@ -443,4 +443,5 @@ pnpm fix
 | José Victor | @jose.victor.nascimento.017 |
 | Gabriel Soares | @Gsdvl |
 | Hiranilson Andrade | @hiranilson.ufrn |
+| Marcos Vinícius | @EhOTeffas |
 | Walter Araújo | @itswalterf |
