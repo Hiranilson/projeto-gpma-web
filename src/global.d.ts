@@ -8,12 +8,14 @@ declare global {
     statusCode: number
   }
 
+  type UserRole = 'ADMIN' | 'LAWYER' | 'CLIENT'
+
   interface User {
     created_at: string
     email: string
     id: string
-    name: 'ADMIN' | 'CLIENT' | 'LAWYER'
-    role: string
+    name: string
+    role: UserRole
   }
 }
 

@@ -31,6 +31,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
     "globals": "^17",
+    "msw": "^2.14.6",
     "prettier": "^3.8.3",
     "typescript": "~6",
     "ultracite": "7.8.1",
@@ -49,5 +50,10 @@
   },
   "type": "module",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }

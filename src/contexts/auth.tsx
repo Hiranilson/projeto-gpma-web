@@ -11,6 +11,7 @@ import {
   type AuthenticateResponse,
   authenticate,
 } from '@/api/authenticate'
+import { getProfile } from '@/api/get-profile'
 import storage from '@/config/storage'
 import { constants } from '@/utils'
 
@@ -33,16 +34,16 @@ interface AuthProviderProps {
 }
 
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !!storage.local.get(constants.localStorageKeys.ACCESS_TOKEN)
+  )
 
   const queryClient = useQueryClient()
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(() => {
     storage.local.delete(constants.localStorageKeys.ACCESS_TOKEN)
-    await queryClient.setQueryData(['userInfo'], null)
-    await queryClient.refetchQueries({ queryKey: ['userInfo'] })
-
-    setIsAuthenticated(false)
+    queryClient.clear()
+    window.location.href = '/sign-in'
   }, [queryClient])
 
   const handleLogin = async (data: AuthenticateResponse) => {
@@ -50,8 +51,10 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       constants.localStorageKeys.ACCESS_TOKEN,
       data.access_token
     )
-
-    await queryClient.setQueryData(['userInfo'], data.user)
+    await queryClient.prefetchQuery({
+      queryKey: ['userInfo'],
+      queryFn: getProfile,
+    })
     setIsAuthenticated(true)
   }
 
@@ -64,9 +67,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     },
   })
 
-  const logout = useCallback(async () => {
-    await handleLogout()
-  }, [handleLogout])
+  const logout = handleLogout
 
   return (
     <AuthContext.Provider

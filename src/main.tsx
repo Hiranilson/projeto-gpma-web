@@ -3,11 +3,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import './index.css'
+
+
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider.tsx'
 import { AuthProvider, useAuth } from './contexts/auth'
-import { useUser } from './contexts/user'
+import { UserProvider, useUser } from './contexts/user'
 import { queryClient } from './lib/react-query'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
@@ -27,14 +29,17 @@ declare module '@tanstack/react-router' {
 }
 
 function InnerApp() {
-  const { authorized } = useUser()
+  const { authorized, userInfo } = useUser()
   const { isAuthenticated } = useAuth()
 
   return (
     <>
       <Toaster />
       <RouterProvider
-        context={{ isAuthenticated: authorized || isAuthenticated }}
+        context={{
+          isAuthenticated: authorized || isAuthenticated,
+          userRole: userInfo?.role,
+        }}
         router={router}
       />
     </>
@@ -51,7 +56,9 @@ if (!rootElement.innerHTML) {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <InnerApp />
+            <UserProvider>
+              <InnerApp />
+            </UserProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
