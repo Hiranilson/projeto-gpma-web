@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { createContext, useContext } from 'react'
-import { type GetProfileResponse, getProfile } from '@/api/get-profile'
+import { getProfile } from '@/api/get-profile'
 import { LoadingScreen } from '@/components/loading-screen'
 import storage from '@/config/storage'
 import { constants } from '@/utils'
 
 interface UserContextValues {
   authorized: boolean
-  userInfo?: NoInfer<GetProfileResponse> | undefined
+  userInfo?: User
 }
 
 const UserContext = createContext<UserContextValues>({} as UserContextValues)
@@ -31,11 +31,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   return (
     <UserContext.Provider
       value={{
-        authorized: !!fetchUserInfo.data,
-        userInfo: fetchUserInfo.data,
+        authorized: !!fetchUserInfo.data?.user,
+        userInfo: fetchUserInfo.data?.user,
       }}
     >
-      {fetchUserInfo.isLoading ? <LoadingScreen /> : children}
+      {hasToken && fetchUserInfo.isPending ? <LoadingScreen /> : children}
     </UserContext.Provider>
   )
 }

@@ -3,6 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 type RouteContext = {
   isAuthenticated: boolean
+  userRole?: UserRole
 }
 
 const RootLayout = () => (

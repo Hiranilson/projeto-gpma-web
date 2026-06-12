@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Eclipse } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -87,11 +87,17 @@ function RouteComponent() {
           <Button
             className="w-full"
             disabled={isSubmitting || isPending}
-            // isLoading={isSubmitting || isPending}
             type="submit"
           >
             Redefinir senha
           </Button>
+
+          <Link
+            to="/sign-in"
+            className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ← Voltar para o login
+          </Link>
         </form>
       </div>
     </div>
