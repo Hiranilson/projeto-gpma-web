@@ -1,19 +1,20 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   ArrowUpRight,
   Briefcase,
   Calendar,
   Clock,
   MapPin,
-  TrendingDown,
-  TrendingUp,
   UserCheck,
   Users,
 } from 'lucide-react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { Badge } from '@/components/ui/badge'
+import { getCases } from '@/api/get-cases'
+import { getClients } from '@/api/get-clients'
+import { getLeads } from '@/api/get-leads'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
@@ -24,96 +25,22 @@ export const Route = createFileRoute('/_app/dashboard/')({
   }),
 })
 
-const metrics: Array<{
-  label: string
-  value: string
-  change: string
-  icon: React.ElementType
-  trend: 'up' | 'down' | 'neutral'
-  color: string
-  bg: string
-}> = [
-  {
-    label: 'Casos Ativos',
-    value: '24',
-    change: '+3 este mês',
-    icon: Briefcase,
-    trend: 'up',
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
+const caseStatusConfig: Record<CaseStatus, { label: string; className: string }> = {
+  OPEN: {
+    label: 'Aberto',
+    className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   },
-  {
-    label: 'Leads',
-    value: '8',
-    change: '+2 esta semana',
-    icon: Users,
-    trend: 'up',
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
+  PENDING: {
+    label: 'Pendente',
+    className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
-  {
-    label: 'Clientes',
-    value: '47',
-    change: '+1 este mês',
-    icon: UserCheck,
-    trend: 'up',
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
+  CLOSED: {
+    label: 'Encerrado',
+    className: 'bg-muted text-muted-foreground',
   },
-  {
-    label: 'Audiências Hoje',
-    value: '2',
-    change: '3 amanhã',
-    icon: Calendar,
-    trend: 'neutral',
-    color: 'text-violet-500',
-    bg: 'bg-violet-500/10',
-  },
-]
+}
 
-const recentCases = [
-  {
-    id: '#001',
-    client: 'Carlos Mendonça',
-    type: 'Trabalhista',
-    status: 'Em andamento',
-    statusVariant: 'default' as const,
-    date: '05 jun. 2026',
-  },
-  {
-    id: '#002',
-    client: 'Ana Paula Ferreira',
-    type: 'Civil',
-    status: 'Aguardando audiência',
-    statusVariant: 'secondary' as const,
-    date: '03 jun. 2026',
-  },
-  {
-    id: '#003',
-    client: 'Roberto Alves',
-    type: 'Criminal',
-    status: 'Em andamento',
-    statusVariant: 'default' as const,
-    date: '01 jun. 2026',
-  },
-  {
-    id: '#004',
-    client: 'Juliana Costa',
-    type: 'Família',
-    status: 'Concluído',
-    statusVariant: 'outline' as const,
-    date: '28 mai. 2026',
-  },
-  {
-    id: '#005',
-    client: 'Marcos Oliveira',
-    type: 'Previdenciário',
-    status: 'Em andamento',
-    statusVariant: 'default' as const,
-    date: '25 mai. 2026',
-  },
-]
-
+// Agenda/audiências ainda não têm módulo no backend — dados ilustrativos.
 const upcomingHearings = [
   {
     id: 1,
@@ -142,24 +69,7 @@ const upcomingHearings = [
     location: '3ª Vara Cível — Natal',
     urgent: false,
   },
-  {
-    id: 4,
-    process: 'Processo nº 0003456-90.2026',
-    client: 'Marcos Oliveira',
-    time: '15:00',
-    date: '10 jun.',
-    location: 'JRPS — Natal',
-    urgent: false,
-  },
 ]
-
-const caseTypeColors: Record<string, string> = {
-  Trabalhista: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  Civil: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  Criminal: 'bg-red-500/10 text-red-600 dark:text-red-400',
-  Família: 'bg-pink-500/10 text-pink-600 dark:text-pink-400',
-  Previdenciário: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-}
 
 function DashboardPage() {
   const { unauthorized } = Route.useSearch()
@@ -169,6 +79,60 @@ function DashboardPage() {
       toast.error('Acesso negado. Você não tem permissão para acessar esta área.')
     }
   }, [unauthorized])
+
+  const { data: leadsData } = useQuery({ queryKey: ['leads', 1], queryFn: () => getLeads(1) })
+  const { data: clientsData } = useQuery({ queryKey: ['clients', 1], queryFn: () => getClients(1) })
+  const { data: casesData, isLoading: loadingCases } = useQuery({
+    queryKey: ['cases', 1],
+    queryFn: () => getCases(1),
+  })
+
+  const clientNameById = new Map((clientsData?.results ?? []).map((c) => [c.id, c.name]))
+  const recentCases = (casesData?.results ?? []).slice(0, 5)
+
+  const fmt = (n?: number) => (n === undefined ? '—' : String(n))
+
+  const metrics: Array<{
+    label: string
+    value: string
+    hint: string
+    icon: React.ElementType
+    color: string
+    bg: string
+  }> = [
+    {
+      label: 'Casos',
+      value: fmt(casesData?.meta.totalCount),
+      hint: 'Total cadastrado',
+      icon: Briefcase,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+    },
+    {
+      label: 'Leads',
+      value: fmt(leadsData?.meta.totalCount),
+      hint: 'No funil de captação',
+      icon: Users,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+    },
+    {
+      label: 'Clientes',
+      value: fmt(clientsData?.meta.totalCount),
+      hint: 'Cadastrados',
+      icon: UserCheck,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+    },
+    {
+      label: 'Audiências Hoje',
+      value: '—',
+      hint: 'Agenda não integrada',
+      icon: Calendar,
+      color: 'text-violet-500',
+      bg: 'bg-violet-500/10',
+    },
+  ]
 
   const today = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -201,12 +165,7 @@ function DashboardPage() {
                     <Icon className={`size-5 ${metric.color}`} />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-xs text-muted-foreground">
-                  {metric.trend === 'down'
-                    ? <TrendingDown className="size-3 text-red-500" />
-                    : <TrendingUp className="size-3 text-emerald-500" />}
-                  <span>{metric.change}</span>
-                </div>
+                <div className="mt-4 text-xs text-muted-foreground">{metric.hint}</div>
               </CardContent>
             </Card>
           )
@@ -219,99 +178,108 @@ function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-semibold">Casos Recentes</CardTitle>
-            <button
-              type="button"
+            <Link
+              to="/cases"
+              search={{ page: 1 }}
               className="flex items-center gap-1 text-xs text-primary hover:underline underline-offset-4"
             >
               Ver todos
               <ArrowUpRight className="size-3" />
-            </button>
+            </Link>
           </CardHeader>
           <Separator />
           <CardContent className="p-0">
-            {/* Desktop table */}
-            <table className="hidden w-full text-sm md:table">
-              <thead>
-                <tr className="border-b border-border/60">
-                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">ID</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Cliente</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Tipo</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Abertura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentCases.map((caso, i) => (
-                  <tr
-                    key={caso.id}
-                    className={`transition-colors hover:bg-muted/40 cursor-pointer ${i < recentCases.length - 1 ? 'border-b border-border/40' : ''}`}
-                  >
-                    <td className="px-5 py-3.5 font-mono text-xs text-muted-foreground">{caso.id}</td>
-                    <td className="px-5 py-3.5 font-medium">{caso.client}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${caseTypeColors[caso.type] ?? 'bg-muted text-muted-foreground'}`}>
-                        {caso.type}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge variant={caso.statusVariant} className="text-xs font-normal">{caso.status}</Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-muted-foreground text-xs">{caso.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {loadingCases ? (
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+                Carregando casos...
+              </div>
+            ) : recentCases.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+                Nenhum caso cadastrado ainda.
+              </div>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <table className="hidden w-full text-sm md:table">
+                  <thead>
+                    <tr className="border-b border-border/60">
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Título</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Cliente</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
+                      <th className="px-5 py-3 text-left text-xs font-medium text-muted-foreground">Abertura</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentCases.map((caso, i) => (
+                      <tr
+                        key={caso.id}
+                        className={`transition-colors hover:bg-muted/40 ${i < recentCases.length - 1 ? 'border-b border-border/40' : ''}`}
+                      >
+                        <td className="px-5 py-3.5 font-medium">{caso.title}</td>
+                        <td className="px-5 py-3.5 text-muted-foreground">
+                          {clientNameById.get(caso.client_id) ?? '—'}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${caseStatusConfig[caso.status].className}`}>
+                            {caseStatusConfig[caso.status].label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-muted-foreground text-xs">
+                          {new Date(caso.created_at).toLocaleDateString('pt-BR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-            {/* Mobile card list */}
-            <div className="divide-y divide-border/40 md:hidden">
-              {recentCases.map((caso) => (
-                <div key={caso.id} className="flex flex-col gap-2 px-4 py-3.5 hover:bg-muted/40 cursor-pointer transition-colors">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-sm truncate">{caso.client}</span>
-                    <Badge variant={caso.statusVariant} className="text-xs font-normal shrink-0">{caso.status}</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${caseTypeColors[caso.type] ?? 'bg-muted text-muted-foreground'}`}>
-                      {caso.type}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground">{caso.id}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{caso.date}</span>
-                  </div>
+                {/* Mobile card list */}
+                <div className="divide-y divide-border/40 md:hidden">
+                  {recentCases.map((caso) => (
+                    <div key={caso.id} className="flex flex-col gap-2 px-4 py-3.5 hover:bg-muted/40 transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm truncate">{caso.title}</span>
+                        <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${caseStatusConfig[caso.status].className}`}>
+                          {caseStatusConfig[caso.status].label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">{clientNameById.get(caso.client_id) ?? '—'}</span>
+                        <span className="ml-auto">{new Date(caso.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Upcoming hearings */}
+        {/* Upcoming hearings — agenda ainda não integrada ao backend */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-sm font-semibold">Próximas Audiências</CardTitle>
-            <button
-              type="button"
-              className="flex items-center gap-1 text-xs text-primary hover:underline underline-offset-4"
-            >
-              Agenda
-              <ArrowUpRight className="size-3" />
-            </button>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold">Próximas Audiências</CardTitle>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Em breve
+              </span>
+            </div>
           </CardHeader>
           <Separator />
           <CardContent className="p-4 space-y-3">
             {upcomingHearings.map((hearing) => (
               <div
                 key={hearing.id}
-                className={`rounded-lg border p-3.5 transition-colors hover:bg-muted/30 cursor-pointer ${hearing.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-border'}`}
+                className={`rounded-lg border p-3.5 transition-colors hover:bg-muted/30 ${hearing.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-border'}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <p className="text-xs font-medium leading-tight line-clamp-1">
                     {hearing.client}
                   </p>
-                  {hearing.urgent && (
+                  {hearing.urgent ? (
                     <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                       Hoje
                     </span>
-                  )}
-                  {!hearing.urgent && (
+                  ) : (
                     <span className="shrink-0 text-[10px] text-muted-foreground">
                       {hearing.date}
                     </span>
