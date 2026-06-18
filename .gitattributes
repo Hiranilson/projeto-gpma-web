@@ -1,0 +1,21 @@
+# Normaliza finais de linha: LF no repositório para todos os arquivos de texto.
+# Evita ruído de CRLF no Windows (ex.: src/routeTree.gen.ts aparecendo como modificado).
+* text=auto eol=lf
+
+# Scripts que precisam de CRLF no Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Arquivos binários — nunca normalizar
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.svg text
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
