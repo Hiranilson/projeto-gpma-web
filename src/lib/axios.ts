@@ -1,6 +1,8 @@
 import axios, { type AxiosError } from 'axios'
+import { toast } from 'sonner'
 import { env } from '@/env'
 import storage from '@/config/storage'
+import { getErrorMessage } from '@/lib/get-error-message'
 import { queryClient } from '@/lib/react-query'
 import { constants } from '@/utils'
 
@@ -18,15 +20,25 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// On 401, clear token and redirect to sign-in
+// Global handling for auth-level errors:
+// - 401 (missing/invalid/expired token): clear session and redirect to sign-in.
+// - 403 (authenticated but no permission): surface a toast so it isn't silent
+//   on screens without their own error handling (e.g. list queries).
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+
+    if (status === 401) {
       storage.local.delete(constants.localStorageKeys.ACCESS_TOKEN)
       queryClient.clear()
       window.location.href = '/sign-in'
     }
+
+    if (status === 403) {
+      toast.error(getErrorMessage(error, 'Você não tem permissão para realizar esta ação.'))
+    }
+
     return Promise.reject(error)
   }
 )
