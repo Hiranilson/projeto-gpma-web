@@ -63,7 +63,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     onSuccess: handleLogin,
     onError: (error: AxiosError) => {
       const errorResponse = error.response?.data as ErrorResponse | undefined
-      toast.error(errorResponse?.message)
+      const message = errorResponse?.message ?? 'Usuário inválido ou senha incorreta.'
+      toast.error(message)
     },
   })
 

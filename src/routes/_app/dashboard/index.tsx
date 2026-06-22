@@ -15,6 +15,7 @@ import { z } from 'zod'
 import { getCases } from '@/api/get-cases'
 import { getClients } from '@/api/get-clients'
 import { getLeads } from '@/api/get-leads'
+import { useUser } from '@/contexts/user'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
@@ -80,11 +81,14 @@ function DashboardPage() {
     }
   }, [unauthorized])
 
-  const { data: leadsData } = useQuery({ queryKey: ['leads', 1], queryFn: () => getLeads(1) })
-  const { data: clientsData } = useQuery({ queryKey: ['clients', 1], queryFn: () => getClients(1) })
+  const { userInfo } = useUser()
+
+  const { data: leadsData } = useQuery({ queryKey: ['leads', 1], queryFn: () => getLeads(1), enabled: userInfo?.role !== 'CLIENT' })
+  const { data: clientsData } = useQuery({ queryKey: ['clients', 1], queryFn: () => getClients(1), enabled: userInfo?.role !== 'CLIENT' })
   const { data: casesData, isLoading: loadingCases } = useQuery({
     queryKey: ['cases', 1],
     queryFn: () => getCases(1),
+    // backend filters by user role for clients
   })
 
   const clientNameById = new Map((clientsData?.results ?? []).map((c) => [c.id, c.name]))
@@ -100,39 +104,60 @@ function DashboardPage() {
     color: string
     bg: string
   }> = [
-    {
+    // For clients we show only Cases and Upcoming hearing
+  ]
+
+  if (userInfo?.role === 'CLIENT') {
+    metrics.push({
+      label: 'Casos',
+      value: fmt(casesData?.meta.totalCount),
+      hint: 'Seus casos',
+      icon: Briefcase,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+    })
+    metrics.push({
+      label: 'Minha próxima audiência',
+      value: '—',
+      hint: 'Agenda não integrada',
+      icon: Calendar,
+      color: 'text-violet-500',
+      bg: 'bg-violet-500/10',
+    })
+  } else {
+    metrics.push({
       label: 'Casos',
       value: fmt(casesData?.meta.totalCount),
       hint: 'Total cadastrado',
       icon: Briefcase,
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
-    },
-    {
+    })
+    metrics.push({
       label: 'Leads',
       value: fmt(leadsData?.meta.totalCount),
       hint: 'No funil de captação',
       icon: Users,
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
-    },
-    {
+    })
+    metrics.push({
       label: 'Clientes',
       value: fmt(clientsData?.meta.totalCount),
       hint: 'Cadastrados',
       icon: UserCheck,
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10',
-    },
-    {
+    })
+    metrics.push({
       label: 'Audiências Hoje',
       value: '—',
       hint: 'Agenda não integrada',
       icon: Calendar,
       color: 'text-violet-500',
       bg: 'bg-violet-500/10',
-    },
-  ]
+    })
+  }
 
   const today = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -258,7 +283,7 @@ function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-sm font-semibold">Próximas Audiências</CardTitle>
+              <CardTitle className="text-sm font-semibold">{userInfo?.role === 'CLIENT' ? 'Minha próxima audiência' : 'Próximas Audiências'}</CardTitle>
               <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                 Em breve
               </span>
@@ -266,40 +291,51 @@ function DashboardPage() {
           </CardHeader>
           <Separator />
           <CardContent className="p-4 space-y-3">
-            {upcomingHearings.map((hearing) => (
-              <div
-                key={hearing.id}
-                className={`rounded-lg border p-3.5 transition-colors hover:bg-muted/30 ${hearing.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-border'}`}
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-xs font-medium leading-tight line-clamp-1">
-                    {hearing.client}
-                  </p>
-                  {hearing.urgent ? (
-                    <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                      Hoje
-                    </span>
-                  ) : (
-                    <span className="shrink-0 text-[10px] text-muted-foreground">
-                      {hearing.date}
-                    </span>
-                  )}
+            {userInfo?.role === 'CLIENT' ? (
+              (() => {
+                const mine = upcomingHearings.filter((h) => h.client === userInfo.name)
+                const next = mine[0]
+                if (!next) return <div className="text-sm text-muted-foreground">Nenhuma audiência agendada.</div>
+                return (
+                  <div className={`rounded-lg border p-3.5 transition-colors hover:bg-muted/30 ${next.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-border'}`}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-xs font-medium leading-tight line-clamp-1">{next.client}</p>
+                      {next.urgent ? (
+                        <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">Hoje</span>
+                      ) : (
+                        <span className="shrink-0 text-[10px] text-muted-foreground">{next.date}</span>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-mono text-muted-foreground mb-2 line-clamp-1">{next.process}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><Clock className="size-3" />{next.time}</span>
+                      <span className="flex items-center gap-1 line-clamp-1"><MapPin className="size-3 shrink-0" /><span className="truncate">{next.location}</span></span>
+                    </div>
+                  </div>
+                )
+              })()
+            ) : (
+              upcomingHearings.map((hearing) => (
+                <div
+                  key={hearing.id}
+                  className={`rounded-lg border p-3.5 transition-colors hover:bg-muted/30 ${hearing.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-border'}`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="text-xs font-medium leading-tight line-clamp-1">{hearing.client}</p>
+                    {hearing.urgent ? (
+                      <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">Hoje</span>
+                    ) : (
+                      <span className="shrink-0 text-[10px] text-muted-foreground">{hearing.date}</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-mono text-muted-foreground mb-2 line-clamp-1">{hearing.process}</p>
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1"><Clock className="size-3" />{hearing.time}</span>
+                    <span className="flex items-center gap-1 line-clamp-1"><MapPin className="size-3 shrink-0" /><span className="truncate">{hearing.location}</span></span>
+                  </div>
                 </div>
-                <p className="text-[10px] font-mono text-muted-foreground mb-2 line-clamp-1">
-                  {hearing.process}
-                </p>
-                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="size-3" />
-                    {hearing.time}
-                  </span>
-                  <span className="flex items-center gap-1 line-clamp-1">
-                    <MapPin className="size-3 shrink-0" />
-                    <span className="truncate">{hearing.location}</span>
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

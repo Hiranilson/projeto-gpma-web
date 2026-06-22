@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import type { AxiosError } from 'axios'
 import { Briefcase, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useUser } from '@/contexts/user'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -265,6 +266,9 @@ function DeleteCaseDialog({ caseItem, open, onClose }: DeleteCaseDialogProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function CasesPage() {
+  const { userInfo } = useUser()
+  const isAdmin = userInfo?.role === 'ADMIN'
+  const isClient = userInfo?.role === 'CLIENT'
   const [editingCase, setEditingCase] = useState<Case | null>(null)
   const [deletingCase, setDeletingCase] = useState<Case | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -303,15 +307,17 @@ function CasesPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Casos</h1>
+          <h1 className="text-xl font-semibold tracking-tight">{isClient ? 'Meus Casos' : 'Casos'}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Acompanhe os casos jurídicos vinculados aos clientes.
+            {isClient ? 'Acompanhe seus casos vinculados.' : 'Acompanhe os casos jurídicos vinculados aos clientes.'}
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
-          <Plus className="size-3.5" />
-          Novo caso
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+            <Plus className="size-3.5" />
+            Novo caso
+          </Button>
+        )}
       </div>
 
       {/* Cases table */}

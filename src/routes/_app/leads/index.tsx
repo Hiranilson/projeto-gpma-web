@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { useUser } from '@/contexts/user'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { createLead } from '@/api/create-lead'
@@ -229,6 +230,8 @@ function DeleteLeadDialog({ lead, open, onClose }: DeleteLeadDialogProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function LeadsPage() {
+  const { userInfo } = useUser()
+  const isAdmin = userInfo?.role === 'ADMIN'
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [deletingLead, setDeletingLead] = useState<Lead | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -264,10 +267,12 @@ function LeadsPage() {
             Gerencie os contatos do funil de captação de clientes.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
-          <Plus className="size-3.5" />
-          Novo lead
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+            <Plus className="size-3.5" />
+            Novo lead
+          </Button>
+        )}
       </div>
 
       {/* Leads table */}

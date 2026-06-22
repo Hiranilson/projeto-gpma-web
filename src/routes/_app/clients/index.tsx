@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, UserSquare2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useUser } from '@/contexts/user'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -273,6 +274,8 @@ function DeleteClientDialog({ client, open, onClose }: DeleteClientDialogProps) 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function ClientsPage() {
+  const { userInfo } = useUser()
+  const isAdmin = userInfo?.role === 'ADMIN'
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [deletingClient, setDeletingClient] = useState<Client | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -308,10 +311,12 @@ function ClientsPage() {
             Gerencie o cadastro completo dos clientes do escritório.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
-          <Plus className="size-3.5" />
-          Novo cliente
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+            <Plus className="size-3.5" />
+            Novo cliente
+          </Button>
+        )}
       </div>
 
       {/* Clients table */}

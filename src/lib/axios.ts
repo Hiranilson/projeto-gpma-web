@@ -30,13 +30,24 @@ api.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 401) {
-      storage.local.delete(constants.localStorageKeys.ACCESS_TOKEN)
-      queryClient.clear()
-      window.location.href = '/sign-in'
+      // Do not auto-redirect during authentication attempts (login),
+      // so the login flow can handle and display proper errors.
+      const url = error.config?.url ?? ''
+      const isAuthRoute = url.includes('/users/authenticate')
+
+      if (!isAuthRoute) {
+        storage.local.delete(constants.localStorageKeys.ACCESS_TOKEN)
+        queryClient.clear()
+        window.location.href = '/sign-in'
+      }
     }
 
     if (status === 403) {
-      toast.error(getErrorMessage(error, 'Você não tem permissão para realizar esta ação.'))
+      // Avoid spamming the UI with permission toasts for harmless GET/list requests
+      const method = error.config?.method ?? 'get'
+      if (method !== 'get') {
+        toast.error(getErrorMessage(error, 'Você não tem permissão para realizar esta ação.'))
+      }
     }
 
     return Promise.reject(error)

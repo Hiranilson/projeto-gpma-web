@@ -136,6 +136,21 @@ interface AppSidebarProps {
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const { userInfo } = useUser()
   const isAdmin = userInfo?.role === 'ADMIN'
+  const isClient = userInfo?.role === 'CLIENT'
+  const isLawyer = userInfo?.role === 'LAWYER'
+
+  const visibleMainNavItems = mainNavItems.filter((item) => {
+    if (isClient) {
+      // Clientes não devem ver Agenda, Financeiro, Relatórios, Leads e Clientes
+      return !['Agenda', 'Financeiro', 'Relatórios', 'Leads', 'Clientes'].includes(item.label)
+    }
+
+    if (isLawyer) {
+      // Advogados não devem ver Leads no menu
+      return !['Leads'].includes(item.label)
+    }
+    return true
+  })
 
   return (
     <aside
@@ -150,7 +165,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
         <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
           Principal
         </p>
-        {mainNavItems.map((item) => (
+        {visibleMainNavItems.map((item) => (
           <NavLink key={item.to} item={item} onNavigate={onClose} />
         ))}
 
