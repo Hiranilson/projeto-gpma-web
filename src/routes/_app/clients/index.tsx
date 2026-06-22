@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, UserSquare2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2, UserSquare2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useUser } from '@/contexts/user'
 import { useForm } from 'react-hook-form'
@@ -279,6 +279,7 @@ function ClientsPage() {
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [deletingClient, setDeletingClient] = useState<Client | null>(null)
   const [formOpen, setFormOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { page } = Route.useSearch()
   const navigate = useNavigate()
@@ -290,6 +291,19 @@ function ClientsPage() {
 
   const clients = data?.results ?? []
   const meta = data?.meta
+
+  const filteredClients = (() => {
+    const term = searchTerm.trim().toLowerCase()
+    const digits = searchTerm.replace(/\D/g, '')
+    if (!term) return clients
+
+    return clients.filter((c) => {
+      const nameMatch = c.name.toLowerCase().includes(term)
+      const cpfNormalized = (c.cpf ?? '').replace(/\D/g, '')
+      const cpfMatch = digits.length > 0 && cpfNormalized.includes(digits)
+      return nameMatch || cpfMatch
+    })
+  })()
 
   function openCreate() {
     setEditingClient(null)
@@ -312,10 +326,21 @@ function ClientsPage() {
           </p>
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
-            <Plus className="size-3.5" />
-            Novo cliente
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative hidden sm:block">
+              <Input
+                placeholder="Pesquisar por nome ou CPF"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-56"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+            </div>
+            <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+              <Plus className="size-3.5" />
+              Novo cliente
+            </Button>
+          </div>
         )}
       </div>
 
@@ -334,7 +359,7 @@ function ClientsPage() {
           <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
             Carregando clientes...
           </div>
-        ) : clients.length === 0 ? (
+        ) : filteredClients.length === 0 ? (
           <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
             Nenhum cliente cadastrado ainda.
           </div>
@@ -352,7 +377,7 @@ function ClientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {clients.map((client, i) => (
+                {filteredClients.map((client, i) => (
                   <tr
                     key={client.id}
                     className={`transition-colors hover:bg-muted/30 ${i < clients.length - 1 ? 'border-b border-border/40' : ''}`}
@@ -391,7 +416,7 @@ function ClientsPage() {
 
             {/* Mobile card list */}
             <div className="divide-y divide-border/40 sm:hidden">
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <div key={client.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                     {client.name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()}

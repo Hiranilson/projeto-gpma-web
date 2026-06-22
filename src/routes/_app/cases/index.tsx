@@ -269,6 +269,7 @@ function CasesPage() {
   const { userInfo } = useUser()
   const isAdmin = userInfo?.role === 'ADMIN'
   const isClient = userInfo?.role === 'CLIENT'
+  const isLawyer = userInfo?.role === 'LAWYER'
   const [editingCase, setEditingCase] = useState<Case | null>(null)
   const [deletingCase, setDeletingCase] = useState<Case | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -367,18 +368,20 @@ function CasesPage() {
                       {new Date(caseItem.created_at).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost" size="icon-sm"
-                          onClick={() => setDeletingCase(caseItem)} title="Remover caso"
-                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
+                      {(isAdmin || isLawyer) && (
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon-sm"
+                            onClick={() => setDeletingCase(caseItem)} title="Remover caso"
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -398,18 +401,20 @@ function CasesPage() {
                       <StatusBadge status={caseItem.status} />
                     </div>
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost" size="icon-sm"
-                      onClick={() => setDeletingCase(caseItem)} title="Remover caso"
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
+                  {(isAdmin || isLawyer) && (
+                    <div className="flex shrink-0 gap-1">
+                      <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="icon-sm"
+                        onClick={() => setDeletingCase(caseItem)} title="Remover caso"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

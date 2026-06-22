@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Eclipse } from 'lucide-react'
+import { Eclipse, Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,8 @@ function RouteComponent() {
       password: '',
     },
   })
+
+  const [showPassword, setShowPassword] = useState(false)
 
   async function handleSignIn(data: SignInForm) {
     await login.mutateAsync(data)
@@ -93,12 +96,23 @@ function RouteComponent() {
                   Esqueceu sua senha?
                 </Link>
               </div>
-              <Input
-                id="password"
-                type="password"
-                {...register('password')}
-                aria-invalid={!!errors.password}
-              />
+              <div className="relative w-full">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  aria-invalid={!!errors.password}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
               {errors.password && <FieldError errors={[errors.password]} />}
             </Field>
           </FieldGroup>

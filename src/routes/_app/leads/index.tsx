@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useUser } from '@/contexts/user'
@@ -235,6 +235,7 @@ function LeadsPage() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [deletingLead, setDeletingLead] = useState<Lead | null>(null)
   const [formOpen, setFormOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { page } = Route.useSearch()
   const navigate = useNavigate()
@@ -246,6 +247,10 @@ function LeadsPage() {
 
   const leads = data?.results ?? []
   const meta = data?.meta
+
+  const filteredLeads = searchTerm
+    ? leads.filter((l) => l.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : leads
 
   function openCreate() {
     setEditingLead(null)
@@ -268,10 +273,21 @@ function LeadsPage() {
           </p>
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
-            <Plus className="size-3.5" />
-            Novo lead
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative hidden sm:block">
+              <Input
+                placeholder="Pesquisar por nome"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-56"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+            </div>
+            <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+              <Plus className="size-3.5" />
+              Novo lead
+            </Button>
+          </div>
         )}
       </div>
 
@@ -290,7 +306,7 @@ function LeadsPage() {
           <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
             Carregando leads...
           </div>
-        ) : leads.length === 0 ? (
+        ) : filteredLeads.length === 0 ? (
           <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
             Nenhum lead cadastrado ainda.
           </div>
@@ -308,7 +324,7 @@ function LeadsPage() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead, i) => (
+                {filteredLeads.map((lead, i) => (
                   <tr
                     key={lead.id}
                     className={`transition-colors hover:bg-muted/30 ${i < leads.length - 1 ? 'border-b border-border/40' : ''}`}
@@ -338,7 +354,7 @@ function LeadsPage() {
 
             {/* Mobile card list */}
             <div className="divide-y divide-border/40 sm:hidden">
-              {leads.map((lead) => (
+              {filteredLeads.map((lead) => (
                 <div key={lead.id} className="flex items-center gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{lead.name}</p>
