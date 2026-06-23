@@ -285,7 +285,7 @@ function CasesPage() {
   const { data: clientsData } = useQuery({
     queryKey: ['clients', 1],
     queryFn: () => getClients(1),
-    enabled: userInfo?.role !== 'CLIENT',
+    enabled: userInfo?.role === 'ADMIN',
   })
 
   const cases = data?.results ?? []
@@ -313,7 +313,7 @@ function CasesPage() {
             Acompanhe os casos jurídicos vinculados aos clientes.
           </p>
         </div>
-        {userInfo?.role !== 'CLIENT' && (
+        {userInfo?.role === 'ADMIN' && (
           <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
             <Plus className="size-3.5" />
             Novo caso
@@ -369,7 +369,7 @@ function CasesPage() {
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {userInfo?.role !== 'CLIENT' && (
+                        {userInfo?.role === 'ADMIN' && (
                           <>
                             <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
                               <Pencil className="size-3.5" />
