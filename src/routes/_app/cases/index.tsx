@@ -281,6 +281,7 @@ function CasesPage() {
   const { data: clientsData } = useQuery({
     queryKey: ['clients', 1],
     queryFn: () => getClients(1),
+    enabled: userInfo?.role === 'ADMIN',
   })
 
   const cases = data?.results ?? []
@@ -308,10 +309,12 @@ function CasesPage() {
             Acompanhe os casos jurídicos vinculados aos clientes.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
-          <Plus className="size-3.5" />
-          Novo caso
-        </Button>
+        {userInfo?.role === 'ADMIN' && (
+          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+            <Plus className="size-3.5" />
+            Novo caso
+          </Button>
+        )}
       </div>
 
       {/* Cases table */}
@@ -362,16 +365,21 @@ function CasesPage() {
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost" size="icon-sm"
-                          onClick={() => setDeletingCase(caseItem)} title="Remover caso"
-                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+<<<<<<< HEAD
+                        {userInfo?.role === 'ADMIN' && (
+                          <>
+                            <Button variant="ghost" size="icon-sm" onClick={() => openEdit(caseItem)} title="Editar caso">
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon-sm"
+                              onClick={() => setDeletingCase(caseItem)} title="Remover caso"
+                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -239,6 +239,7 @@ function LeadsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['leads', page],
     queryFn: () => getLeads(page),
+    enabled: userInfo?.role === 'ADMIN',
   })
 
   const leads = data?.results ?? []
@@ -254,6 +255,14 @@ function LeadsPage() {
     setFormOpen(true)
   }
 
+  if (userInfo?.role === 'CLIENT' || userInfo?.role === 'LAWYER') {
+    return (
+      <div className="p-6">
+        <h1 className="text-xl font-semibold tracking-tight">Leads</h1>
+        <p className="text-sm text-muted-foreground mt-2">Informações de leads não estão disponíveis para seu perfil.</p>
+      </div>
+    )
+  }
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -264,10 +273,12 @@ function LeadsPage() {
             Gerencie os contatos do funil de captação de clientes.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+        {userInfo?.role === 'ADMIN' && (
+          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="size-3.5" />
           Novo lead
-        </Button>
+          </Button>
+        )}
       </div>
 
       {/* Leads table */}

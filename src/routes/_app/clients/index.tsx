@@ -283,6 +283,7 @@ function ClientsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['clients', page],
     queryFn: () => getClients(page),
+    enabled: userInfo?.role === 'ADMIN',
   })
 
   const clients = data?.results ?? []
@@ -298,6 +299,14 @@ function ClientsPage() {
     setFormOpen(true)
   }
 
+  if (userInfo?.role === 'CLIENT' || userInfo?.role === 'LAWYER') {
+    return (
+      <div className="p-6">
+        <h1 className="text-xl font-semibold tracking-tight">Clientes</h1>
+        <p className="text-sm text-muted-foreground mt-2">Informações de clientes não estão disponíveis para seu perfil.</p>
+      </div>
+    )
+  }
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -308,10 +317,12 @@ function ClientsPage() {
             Gerencie o cadastro completo dos clientes do escritório.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
+        {userInfo?.role === 'ADMIN' && (
+          <Button size="sm" onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="size-3.5" />
           Novo cliente
-        </Button>
+          </Button>
+        )}
       </div>
 
       {/* Clients table */}
