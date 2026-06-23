@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useUser } from '@/contexts/user'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, UserSquare2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -280,9 +281,12 @@ function ClientsPage() {
   const { page } = Route.useSearch()
   const navigate = useNavigate()
 
+  const { userInfo } = useUser()
+
   const { data, isLoading } = useQuery({
     queryKey: ['clients', page],
     queryFn: () => getClients(page),
+    enabled: userInfo?.role !== 'CLIENT',
   })
 
   const clients = data?.results ?? []
@@ -296,6 +300,15 @@ function ClientsPage() {
   function openEdit(client: Client) {
     setEditingClient(client)
     setFormOpen(true)
+  }
+
+  if (userInfo?.role === 'CLIENT') {
+    return (
+      <div className="p-6">
+        <h1 className="text-xl font-semibold tracking-tight">Clientes</h1>
+        <p className="text-sm text-muted-foreground mt-2">Informações de clientes não estão disponíveis para seu perfil.</p>
+      </div>
+    )
   }
 
   return (
