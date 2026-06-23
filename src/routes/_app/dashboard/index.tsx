@@ -137,7 +137,9 @@ function DashboardPage() {
     },
   ]
 
-  const visibleMetrics = userInfo?.role === 'CLIENT' ? metrics.filter((m) => m.label === 'Casos' || m.label === 'Audiências Hoje') : metrics
+  const visibleMetrics = (userInfo?.role === 'CLIENT' || userInfo?.role === 'LAWYER')
+    ? metrics.filter((m) => m.label === 'Casos' || m.label === 'Audiências Hoje')
+    : metrics
 
   const today = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -146,6 +148,7 @@ function DashboardPage() {
     year: 'numeric',
   })
   // If logged user is a CLIENT, show upcoming hearings only for their cases
+  // If logged user is a LAWYER, show upcoming hearings only for cases assigned to them
   const displayedHearings = userInfo?.role === 'CLIENT'
     ? (casesData?.results ?? []).slice(0, 5).map((c) => ({
         id: c.id,
@@ -156,6 +159,19 @@ function DashboardPage() {
         location: 'Tribunal (não integrado)',
         urgent: false,
       }))
+    : userInfo?.role === 'LAWYER'
+    ? (casesData?.results ?? [])
+        .filter((c) => c.assigned_lawyer_id === userInfo.id)
+        .slice(0, 5)
+        .map((c) => ({
+          id: c.id,
+          process: `Caso: ${c.title}`,
+          client: clientNameById.get(c.client_id) ?? '—',
+          time: new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          date: new Date(c.created_at).toLocaleDateString('pt-BR'),
+          location: 'Tribunal (não integrado)',
+          urgent: false,
+        }))
     : upcomingHearings
 
   return (
