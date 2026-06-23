@@ -15,6 +15,7 @@ import { z } from 'zod'
 import { getCases } from '@/api/get-cases'
 import { getClients } from '@/api/get-clients'
 import { getLeads } from '@/api/get-leads'
+import { useUser } from '@/contexts/user'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
@@ -73,6 +74,7 @@ const upcomingHearings = [
 
 function DashboardPage() {
   const { unauthorized } = Route.useSearch()
+  const { userInfo } = useUser()
 
   useEffect(() => {
     if (unauthorized) {
@@ -134,12 +136,48 @@ function DashboardPage() {
     },
   ]
 
+<<<<<<< HEAD
+=======
+  const visibleMetrics = (userInfo?.role === 'CLIENT' || userInfo?.role === 'LAWYER')
+    ? metrics.filter((m) => m.label === 'Casos' || m.label === 'Audiências Hoje')
+    : metrics
+
+>>>>>>> 42dfcdd (feat(dashboard): hide Leads/Clients metrics for LAWYER; show hearings only for assigned cases)
   const today = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   })
+<<<<<<< HEAD
+=======
+  // If logged user is a CLIENT, show upcoming hearings only for their cases
+  // If logged user is a LAWYER, show upcoming hearings only for cases assigned to them
+  const displayedHearings = userInfo?.role === 'CLIENT'
+    ? (casesData?.results ?? []).slice(0, 5).map((c) => ({
+        id: c.id,
+        process: `Caso: ${c.title}`,
+        client: userInfo.name,
+        time: new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        date: new Date(c.created_at).toLocaleDateString('pt-BR'),
+        location: 'Tribunal (não integrado)',
+        urgent: false,
+      }))
+    : userInfo?.role === 'LAWYER'
+    ? (casesData?.results ?? [])
+        .filter((c) => c.assigned_lawyer_id === userInfo.id)
+        .slice(0, 5)
+        .map((c) => ({
+          id: c.id,
+          process: `Caso: ${c.title}`,
+          client: clientNameById.get(c.client_id) ?? '—',
+          time: new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          date: new Date(c.created_at).toLocaleDateString('pt-BR'),
+          location: 'Tribunal (não integrado)',
+          urgent: false,
+        }))
+    : upcomingHearings
+>>>>>>> 42dfcdd (feat(dashboard): hide Leads/Clients metrics for LAWYER; show hearings only for assigned cases)
 
   return (
     <div className="p-6 space-y-6">
@@ -170,16 +208,41 @@ function DashboardPage() {
             </Card>
           )
         })}
-      </div>
+          const visibleMetrics = (userInfo?.role === 'CLIENT' || userInfo?.role === 'LAWYER')
+            ? metrics.filter((m) => m.label === 'Casos' || m.label === 'Audiências Hoje')
+            : metrics
 
-      {/* Main content */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Recent cases */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-sm font-semibold">Casos Recentes</CardTitle>
-            <Link
-              to="/cases"
+          const today = new Date().toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+
+          const displayedHearings = userInfo?.role === 'CLIENT'
+            ? (casesData?.results ?? []).slice(0, 5).map((c) => ({
+                id: c.id,
+                process: `Caso: ${c.title}`,
+                client: userInfo.name,
+                time: new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                date: new Date(c.created_at).toLocaleDateString('pt-BR'),
+                location: 'Tribunal (não integrado)',
+                urgent: false,
+              }))
+            : userInfo?.role === 'LAWYER'
+            ? (casesData?.results ?? [])
+                .filter((c) => c.assigned_lawyer_id === userInfo.id)
+                .slice(0, 5)
+                .map((c) => ({
+                  id: c.id,
+                  process: `Caso: ${c.title}`,
+                  client: clientNameById.get(c.client_id) ?? '—',
+                  time: new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                  date: new Date(c.created_at).toLocaleDateString('pt-BR'),
+                  location: 'Tribunal (não integrado)',
+                  urgent: false,
+                }))
+            : upcomingHearings
               search={{ page: 1 }}
               className="flex items-center gap-1 text-xs text-primary hover:underline underline-offset-4"
             >
